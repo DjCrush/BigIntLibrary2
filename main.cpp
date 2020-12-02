@@ -1,106 +1,140 @@
 #include <iostream>
 #include <vector>
+#include <string>
+using namespace std;
+
+#if _M_X64
+ typedef __int64 int_t;
+ constexpr __int64 NUMBER = 999'999'999'999'999'999;
+ constexpr __int64 NUMBER2 = 1'000'000'000'000'000'000;
+ constexpr __int32 LENGTH = 18;
+#else
+ typedef __int32 int_t;
+ constexpr __int32 NUMBER = 999'999'999;
+ constexpr __int32 NUMBER2 = 1'000'000'000;
+ constexpr __int32 LENGTH = 9;
+#endif
 
 class BigInteger
 {
 public:
-	explicit BigInteger(const std::string& n)
+	BigInteger(const string& s) 
 	{
-		for (auto it = n.rbegin(); it != n.rend(); ++it)
+		int count = 0;
+		int_t shift = 1;
+		int_t sum = 0;
+		for (auto it = s.rbegin(); it != s.rend(); ++it)
 		{
-			number.push_back(*it - '0');
+			sum += (*it - '0') * shift;
+			++count;
+			shift *= 10;
+			if (count == LENGTH)
+			{
+				v.push_back(sum);
+				count = 0;
+				shift = 1;
+				sum = 0;
+			}
+		}
+		if (count)
+		{
+			v.push_back(sum);
 		}
 	}
-	friend std::ostream& operator << (std::ostream& out, const BigInteger& n);
-	friend BigInteger operator + (const BigInteger& a, const BigInteger& b);
 private:
-	BigInteger(std::vector<int> number)
+	friend std::ostream& operator << (std::ostream& out, const BigInteger& b);
+	friend BigInteger operator + (const BigInteger& a, const BigInteger& b);
+	BigInteger(std::vector<int_t>& v)
 	{
-		this->number = std::move(number);
+		this->v = std::move(v);
 	}
-	std::vector<int> number;
+	vector<int_t> v;
 };
 
 BigInteger operator + (const BigInteger& a, const BigInteger& b)
 {
-	int carry = 0, aSize = a.number.size(), bSize = b.number.size();
-	std::vector<int> result(aSize > bSize ? aSize : bSize);
-	
+	size_t carry = 0, aSize = a.v.size(), bSize = b.v.size();
+	vector<int_t> vRes(aSize > bSize ? aSize : bSize);
 	if (aSize > bSize)
 	{
-		for (size_t i = 0; i < bSize; ++i)
+		for (int i = 0; i < bSize; ++i)
 		{
-			int sum = a.number[i] + b.number[i] + carry;
-			if (sum > 9)
+			int_t sum = a.v[i] + b.v[i] + carry;
+			if (sum > NUMBER)
 			{
+				sum -= NUMBER2;
 				carry = 1;
-				sum -= 10;
 			}
 			else
 			{
 				carry = 0;
 			}
-			result[i] = sum;
+			vRes[i] = sum;
 		}
 		for (size_t i = bSize; i < aSize; ++i)
 		{
-			int sum = a.number[i] + carry;
-			if (sum > 9)
+			int_t sum = a.v[i] + carry;
+			if (sum > NUMBER)
 			{
 				carry = 1;
-				sum -= 10;
+				sum -= NUMBER2;
 			}
 			else
 			{
 				carry = 0;
 			}
-			result[i] = sum;
+			vRes[i] = sum;
 		}
+
 	}
 	else
 	{
 		for (size_t i = 0; i < aSize; ++i)
 		{
-			int sum = a.number[i] + b.number[i] + carry;
-			if (sum > 9)
+			int_t sum = a.v[i] + b.v[i] + carry;
+			if (sum > NUMBER)
 			{
 				carry = 1;
-				sum -= 10;
+				sum -= NUMBER2;
 			}
 			else
 			{
 				carry = 0;
 			}
-			result[i] = sum;
+			vRes[i] = sum;
 		}
 		for (size_t i = aSize; i < bSize; ++i)
 		{
-			int sum = b.number[i] + carry;
-			if (sum > 9)
+			int_t sum = b.v[i] + carry;
+			if (sum > NUMBER)
 			{
 				carry = 1;
-				sum -= 10;
+				sum -= NUMBER2;
 			}
 			else
 			{
 				carry = 0;
 			}
-			result[i] = sum;
+			vRes[i] = sum;
 		}
 	}
 	if (carry)
 	{
-		result.push_back(1);
+		vRes.push_back(1);
 	}
-	return result;
+	return vRes;
 }
 
-
-std::ostream& operator << (std::ostream& out, const BigInteger& n)
+std::ostream& operator << (std::ostream& out, const BigInteger& b)
 {
-	for (auto it = n.number.rbegin(); it != n.number.rend(); ++it)
+	for (auto it = b.v.rbegin(); it != b.v.rend(); ++it)
 	{
-		out << *it;
+		std::string s = std::to_string(*it);
+		if (s.length() < LENGTH && it != b.v.rbegin())
+		{
+			out << std::string(LENGTH - s.length(), '0');
+		}
+		out << s;
 	}
 	return out;
 }
