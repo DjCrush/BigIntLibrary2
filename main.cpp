@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-using namespace std;
+
 
 #if _M_X64
  typedef __int64 int_t;
@@ -48,13 +48,13 @@ private:
 	{
 		this->v = std::move(v);
 	}
-	vector<int_t> v;
+	std::vector<int_t> v;
 };
 
 BigInteger operator + (const BigInteger& a, const BigInteger& b)
 {
 	size_t carry = 0, aSize = a.v.size(), bSize = b.v.size();
-	vector<int_t> vRes(aSize > bSize ? aSize : bSize);
+	std::vector<int_t> vRes(aSize > bSize ? aSize : bSize);
 	if (aSize > bSize)
 	{
 		for (int i = 0; i < bSize; ++i)
